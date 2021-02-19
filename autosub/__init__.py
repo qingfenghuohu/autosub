@@ -97,7 +97,7 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
                 headers = {"Content-Type": "audio/x-flac; rate=%d" % self.rate}
 
                 try:
-                    resp = requests.post(url, data=data, headers=headers)
+                    resp = requests.post(url+data, data=data, headers=headers)
                 except requests.exceptions.ConnectionError:
                     continue
 
