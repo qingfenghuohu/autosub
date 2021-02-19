@@ -106,7 +106,7 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
                 # translator = Translator(service_urls=[
                 #     'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
                 # trans = translator.translate(data, src='en', dest='zh-cn')
-                line = GoogleTrans().query(data,src=language)
+                line = GoogleTrans().query(data,src=self.language)
                 return line
                 # url = GOOGLE_SPEECH_API_URL.format(lang=self.language, key=self.api_key)
                 # headers = {"Content-Type": "audio/x-flac; rate=%d" % self.rate}
