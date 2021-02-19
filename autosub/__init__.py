@@ -23,6 +23,7 @@ import json
 import execjs
 import re
 import ssl
+from googletrans import Translator
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -102,7 +103,10 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
     def __call__(self, data):
         try:
             for _ in range(self.retries):
-                line = GoogleTrans().query(data)
+                # translator = Translator(service_urls=[
+                #     'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
+                # trans = translator.translate(data, src='en', dest='zh-cn')
+                line = GoogleTrans().query(data,src=language)
                 return line
                 # url = GOOGLE_SPEECH_API_URL.format(lang=self.language, key=self.api_key)
                 # headers = {"Content-Type": "audio/x-flac; rate=%d" % self.rate}
@@ -127,15 +131,15 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
             return None
 
 
-class Translator(object): # pylint: disable=too-few-public-methods
+class Trans(object): # pylint: disable=too-few-public-methods
     """
     Class for translating a sentence from a one language to another.
     """
     def __init__(self, language, api_key, src, dst):
         self.language = language
         self.api_key = api_key
-        self.service = build('translate', 'v2',
-                             developerKey=self.api_key)
+        # self.service = build('translate', 'v2',
+        #                      developerKey=self.api_key)
         self.src = src
         self.dst = dst
 
@@ -143,18 +147,21 @@ class Translator(object): # pylint: disable=too-few-public-methods
         try:
             if not sentence:
                 return None
+            translator = Translator(service_urls=[
+                'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
+            res = translator.translate(sentence, src=self.src, dest=self.dst)
+            return res.text
+            # result = self.service.translations().list( # pylint: disable=no-member
+            #     source=self.src,
+            #     target=self.dst,
+            #     q=[sentence]
+            # ).execute()
 
-            result = self.service.translations().list( # pylint: disable=no-member
-                source=self.src,
-                target=self.dst,
-                q=[sentence]
-            ).execute()
+            # if 'translations' in result and result['translations'] and \
+            #     'translatedText' in result['translations'][0]:
+            #     return result['translations'][0]['translatedText']
 
-            if 'translations' in result and result['translations'] and \
-                'translatedText' in result['translations'][0]:
-                return result['translations'][0]['translatedText']
-
-            return None
+            # return None
 
         except KeyboardInterrupt:
             return None
@@ -285,7 +292,7 @@ def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
             if src_language.split("-")[0] != dst_language.split("-")[0]:
                 if api_key:
                     google_translate_api_key = api_key
-                    translator = Translator(dst_language, google_translate_api_key,
+                    translator = Trans(dst_language, google_translate_api_key,
                                             dst=dst_language,
                                             src=src_language)
                     prompt = "Translating from {0} to {1}: ".format(src_language, dst_language)
@@ -421,63 +428,12 @@ def main():
     return 0
 
 class GoogleTrans(object):
-    def __init__(self):
-        self.url = 'https://translate.google.cn/translate_a/single'
-        self.TKK = "434674.96463358"  # 随时都有可能需要更新的TKK值
-
-        self.header = {
-            "accept": "*/*",
-            "accept-language": "zh-CN,zh;q=0.9",
-            "cookie": "NID=188=M1p_rBfweeI_Z02d1MOSQ5abYsPfZogDrFjKwIUbmAr584bc9GBZkfDwKQ80cQCQC34zwD4ZYHFMUf4F59aDQLSc79_LcmsAihnW0Rsb1MjlzLNElWihv-8KByeDBblR2V1kjTSC8KnVMe32PNSJBQbvBKvgl4CTfzvaIEgkqss",
-            "referer": "https://translate.google.cn/",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-            "x-client-data": "CJK2yQEIpLbJAQjEtskBCKmdygEIqKPKAQi5pcoBCLGnygEI4qjKAQjxqcoBCJetygEIza3KAQ==",
-        }
-
-        self.data = {
-            "client": "webapp",  # 基于网页访问服务器
-            "sl": "auto",  # 源语言,auto表示由谷歌自动识别
-            "tl": "vi",  # 翻译的目标语言
-            "hl": "zh-CN",  # 界面语言选中文，毕竟URL都是cn后缀了，就不装美国人了
-            "dt": ["at", "bd", "ex", "ld", "md", "qca", "rw", "rm", "ss", "t"],  # dt表示要求服务器返回的数据类型
-            "otf": "2",
-            "ssel": "0",
-            "tsel": "0",
-            "kc": "1",
-            "tk": "",  # 谷歌服务器会核对的token
-            "q": ""  # 待翻译的字符串
-        }
-
-        with open('token.js', 'r', encoding='utf-8') as f:
-            self.js_fun = execjs.compile(f.read())
-
-        # 构建完对象以后要同步更新一下TKK值
-        # self.update_TKK()
-
-    def update_TKK(self):
-        url = "https://translate.google.cn/"
-        req = urllib.request.Request(url=url, headers=self.header)
-        page_source = urllib.request.urlopen(req).read().decode("utf-8")
-        self.TKK = re.findall(r"tkk:'([0-9]+\.[0-9]+)'", page_source)[0]
-
-    def construct_url(self):
-        base = self.url + '?'
-        for key in self.data:
-            if isinstance(self.data[key], list):
-                base = base + "dt=" + "&dt=".join(self.data[key]) + "&"
-            else:
-                base = base + key + '=' + self.data[key] + '&'
-        base = base[:-1]
-        return base
-
-    def query(self, q):
+    def query(self, q,src):
         self.data['q'] = urllib.parse.quote(q)
-        self.data['tk'] = self.js_fun.call('wo', q, self.TKK)
-        self.data['tl'] = 'zh-CN'
-        url = self.construct_url()
-        req = urllib.request.Request(url=url, headers=self.header)
-        response = json.loads(urllib.request.urlopen(req).read().decode("utf-8"))
-        targetText = response[0][0][0]
+        translator = Translator(service_urls=[
+            'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
+        trans = translator.translate(urllib.parse.quote(q), src=src, dest='zh-cn')
+        targetText = trans.text
         # originalText = response[0][0][1]
         # originalLanguageCode = response[2]
         # print("翻译前：{}，翻译前code：{}".format(originalText, originalLanguageCode))
