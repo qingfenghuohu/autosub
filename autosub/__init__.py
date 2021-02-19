@@ -429,7 +429,6 @@ def main():
 
 class GoogleTrans(object):
     def query(self, q,src):
-        self.data['q'] = urllib.parse.quote(q)
         translator = Translator(service_urls=[
             'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
         trans = translator.translate(urllib.parse.quote(q), src=src, dest='zh-cn')
