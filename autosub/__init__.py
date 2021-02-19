@@ -15,8 +15,12 @@ import subprocess
 import sys
 import tempfile
 import wave
-import json
 import requests
+import execjs
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
