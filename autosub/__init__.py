@@ -92,7 +92,6 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
 
     def __call__(self, data):
         gTrans = GoogleTrans()
-
         try:
             for _ in range(self.retries):
                line = gTrans.query(data)
