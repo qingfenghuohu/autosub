@@ -2,7 +2,7 @@
 Defines autosub's main functionality.
 """
 
-#!/usr/bin/env python
+# !/usr/bin/env python
 
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -61,10 +61,11 @@ def percentile(arr, percent):
     return low_value + high_value
 
 
-class FLACConverter(object): # pylint: disable=too-few-public-methods
+class FLACConverter(object):  # pylint: disable=too-few-public-methods
     """
     Class for converting a region of an input audio or video file into a FLAC audio file
     """
+
     def __init__(self, source_path, include_before=0.25, include_after=0.25):
         self.source_path = source_path
         self.include_before = include_before
@@ -90,10 +91,11 @@ class FLACConverter(object): # pylint: disable=too-few-public-methods
             return None
 
 
-class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
+class SpeechRecognizer(object):  # pylint: disable=too-few-public-methods
     """
     Class for performing speech-to-text for an input FLAC file.
     """
+
     def __init__(self, language="en", rate=44100, retries=3, api_key=GOOGLE_SPEECH_API_KEY):
         self.language = language
         self.rate = rate
@@ -103,14 +105,11 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
     def __call__(self, data):
         try:
             for _ in range(self.retries):
-                # translator = Translator(service_urls=[
-                #     'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
-                # trans = translator.translate(data, src='en', dest='zh-cn')
-                line = GoogleTrans().query(data,src=self.language)
+                line = GoogleTrans().query(data, lang=self.language)
                 return line
                 # url = GOOGLE_SPEECH_API_URL.format(lang=self.language, key=self.api_key)
                 # headers = {"Content-Type": "audio/x-flac; rate=%d" % self.rate}
-                #
+
                 # try:
                 #     resp = requests.post(url+data, data=data, headers=headers)
                 # except requests.exceptions.ConnectionError:
@@ -131,10 +130,11 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
             return None
 
 
-class Trans(object): # pylint: disable=too-few-public-methods
+class Trans(object):  # pylint: disable=too-few-public-methods
     """
     Class for translating a sentence from a one language to another.
     """
+
     def __init__(self, language, api_key, src, dst):
         self.language = language
         self.api_key = api_key
@@ -171,6 +171,7 @@ def which(program):
     """
     Return the path for a given executable.
     """
+
     def is_exe(file_path):
         """
         Checks whether a file is executable.
@@ -209,7 +210,8 @@ def extract_audio(filename, channels=1, rate=16000):
     return temp.name, rate
 
 
-def find_speech_regions(filename, frame_width=4096, min_region_size=0.5, max_region_size=6): # pylint: disable=too-many-locals
+def find_speech_regions(filename, frame_width=4096, min_region_size=0.5,
+                        max_region_size=6):  # pylint: disable=too-many-locals
     """
     Perform voice activity detection on a given audio file.
     """
@@ -219,7 +221,7 @@ def find_speech_regions(filename, frame_width=4096, min_region_size=0.5, max_reg
     n_channels = reader.getnchannels()
     chunk_duration = float(frame_width) / rate
 
-    n_chunks = int(math.ceil(reader.getnframes()*1.0 / frame_width))
+    n_chunks = int(math.ceil(reader.getnframes() * 1.0 / frame_width))
     energies = []
 
     for _ in range(n_chunks):
@@ -248,7 +250,7 @@ def find_speech_regions(filename, frame_width=4096, min_region_size=0.5, max_reg
     return regions
 
 
-def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
+def generate_subtitles(  # pylint: disable=too-many-locals,too-many-arguments
         source_path,
         output=None,
         concurrency=DEFAULT_CONCURRENCY,
@@ -256,7 +258,7 @@ def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
         dst_language=DEFAULT_DST_LANGUAGE,
         subtitle_file_format=DEFAULT_SUBTITLE_FORMAT,
         api_key=None,
-    ):
+):
     """
     Given an input audio/video file, generate subtitles in the specified language and format.
     """
@@ -293,8 +295,8 @@ def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
                 if api_key:
                     google_translate_api_key = api_key
                     translator = Trans(dst_language, google_translate_api_key,
-                                            dst=dst_language,
-                                            src=src_language)
+                                       dst=dst_language,
+                                       src=src_language)
                     prompt = "Translating from {0} to {1}: ".format(src_language, dst_language)
                     widgets = [prompt, Percentage(), ' ', Bar(), ' ', ETA()]
                     pbar = ProgressBar(widgets=widgets, maxval=len(regions)).start()
@@ -427,11 +429,12 @@ def main():
 
     return 0
 
+
 class GoogleTrans(object):
-    def query(self, q,src):
+    def query(self, q, lang):
         translator = Translator(service_urls=[
             'translate.google.cn', ])  # 如果可以上外网，还可添加 'translate.google.com' 等
-        trans = translator.translate(urllib.parse.quote(q), src=src, dest='zh-cn')
+        trans = translator.translate(urllib.parse.quote(q), src=lang, dest='zh-cn')
         targetText = trans.text
         # originalText = response[0][0][1]
         # originalLanguageCode = response[2]
@@ -439,6 +442,7 @@ class GoogleTrans(object):
         # print("翻译后：{}, 翻译后code：{}".format(targetText, lang_to))
         # print(lang_to)
         return targetText
+
 
 if __name__ == '__main__':
     sys.exit(main())
