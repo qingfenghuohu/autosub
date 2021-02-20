@@ -2,7 +2,7 @@
 Defines autosub's main functionality.
 """
 
-#!/usr/bin/env python
+# !/usr/bin/env python
 
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -56,10 +56,11 @@ def percentile(arr, percent):
     return low_value + high_value
 
 
-class FLACConverter(object): # pylint: disable=too-few-public-methods
+class FLACConverter(object):  # pylint: disable=too-few-public-methods
     """
     Class for converting a region of an input audio or video file into a FLAC audio file
     """
+
     def __init__(self, source_path, include_before=0.25, include_after=0.25):
         self.source_path = source_path
         self.include_before = include_before
@@ -85,10 +86,11 @@ class FLACConverter(object): # pylint: disable=too-few-public-methods
             return None
 
 
-class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
+class SpeechRecognizer(object):  # pylint: disable=too-few-public-methods
     """
     Class for performing speech-to-text for an input FLAC file.
     """
+
     def __init__(self, language="en", rate=44100, retries=3, api_key=GOOGLE_SPEECH_API_KEY):
         self.language = language
         self.rate = rate
@@ -99,8 +101,8 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
         gTrans = GoogleTrans()
         try:
             for _ in range(self.retries):
-               line = gTrans.query(data)
-               return line
+                line = gTrans.query(data)
+                return line
                 # url = GOOGLE_SPEECH_API_URL.format(lang=self.language, key=self.api_key)
                 # headers = {"Content-Type": "audio/x-flac; rate=%d" % self.rate}
                 #
@@ -124,10 +126,11 @@ class SpeechRecognizer(object): # pylint: disable=too-few-public-methods
             return None
 
 
-class Translator(object): # pylint: disable=too-few-public-methods
+class Translator(object):  # pylint: disable=too-few-public-methods
     """
     Class for translating a sentence from a one language to another.
     """
+
     def __init__(self, language, api_key, src, dst):
         self.language = language
         self.api_key = api_key
@@ -163,6 +166,7 @@ def which(program):
     """
     Return the path for a given executable.
     """
+
     def is_exe(file_path):
         """
         Checks whether a file is executable.
@@ -201,7 +205,8 @@ def extract_audio(filename, channels=1, rate=16000):
     return temp.name, rate
 
 
-def find_speech_regions(filename, frame_width=4096, min_region_size=0.5, max_region_size=6): # pylint: disable=too-many-locals
+def find_speech_regions(filename, frame_width=4096, min_region_size=0.5,
+                        max_region_size=6):  # pylint: disable=too-many-locals
     """
     Perform voice activity detection on a given audio file.
     """
@@ -211,7 +216,7 @@ def find_speech_regions(filename, frame_width=4096, min_region_size=0.5, max_reg
     n_channels = reader.getnchannels()
     chunk_duration = float(frame_width) / rate
 
-    n_chunks = int(math.ceil(reader.getnframes()*1.0 / frame_width))
+    n_chunks = int(math.ceil(reader.getnframes() * 1.0 / frame_width))
     energies = []
 
     for _ in range(n_chunks):
@@ -240,7 +245,7 @@ def find_speech_regions(filename, frame_width=4096, min_region_size=0.5, max_reg
     return regions
 
 
-def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
+def generate_subtitles(  # pylint: disable=too-many-locals,too-many-arguments
         source_path,
         output=None,
         concurrency=DEFAULT_CONCURRENCY,
@@ -248,7 +253,7 @@ def generate_subtitles( # pylint: disable=too-many-locals,too-many-arguments
         dst_language=DEFAULT_DST_LANGUAGE,
         subtitle_file_format=DEFAULT_SUBTITLE_FORMAT,
         api_key=None,
-    ):
+):
     """
     Given an input audio/video file, generate subtitles in the specified language and format.
     """
@@ -478,14 +483,25 @@ class GoogleTrans:
         result = requests.get(
             """http://translate.google.cn/translate_a/single?client=t&tl=zh-CN&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&pc=1&srcrom=0&ssel=0&tsel=0&kc=2&sl=auto""",
             params=param)
+        try:
+            json.loads(result.text, encoding='utf-8')
+        except ValueError:
+            return None
         res = result.json()
-        # 返回的结果为Json，解析为一个嵌套列表
         return res[0][0][0]
 
     def query(self, content):
         js = Py4Js()
         tk = js.getTk(content)
         return self.translate(tk, content)
+
+    def is_json(self, myjson):
+        try:
+            json_object = json.loads(myjson)
+        except ValueError as e:
+            return False
+        return True
+
 
 if __name__ == '__main__':
     sys.exit(main())

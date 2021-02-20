@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import json
 import requests
 import execjs
 import ssl
@@ -65,9 +66,12 @@ class GoogleTrans:
         result = requests.get(
             """http://translate.google.cn/translate_a/single?client=t&tl=zh-CN&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&pc=1&srcrom=0&ssel=0&tsel=0&kc=2&sl=auto""",
             params=param)
+        try:
+            json.loads(result.text, encoding='utf-8')
+        except ValueError:
+            return None
         res = result.json()
-        # 返回的结果为Json，解析为一个嵌套列表
-        print(res[0][0][0])
+        return res[0][0][0]
 
     def query(self, content):
         js = Py4Js()
